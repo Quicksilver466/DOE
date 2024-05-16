@@ -17,12 +17,12 @@ result.save_to_disk("/data/Datasets-LLMS/CodeFeedback-Filtered-Instruction-Trans
 
 dataset = load_dataset(DATASETS["TIGER-Lab/MathInstruct"], split="train")
 result = dataset.map(maths_transform, remove_columns=["source", "output", "instruction"])
-result.save_to_disk("/data/Datasets-LLMS/CodeFeedback-Filtered-Instruction-Transformed")
+result.save_to_disk("/data/Datasets-LLMS/MathInstruct-Transformed")
 
 dataset = load_dataset(DATASETS["lavita/ChatDoctor-HealthCareMagic-100k"], split="train")
 result = dataset.map(medic_transform, remove_columns=["input", "output", "instruction"])
-result.save_to_disk("/data/Datasets-LLMS/CodeFeedback-Filtered-Instruction-Transformed")
+result.save_to_disk("/data/Datasets-LLMS/ChatDoctor-HealthCareMagic-100k-Transformed")
 
 dataset = load_dataset(DATASETS["fnlp/moss-002-sft-data"], split="train")
 result = dataset.map(mult_transform, remove_columns=["num_turns", "plain_text", "prefix", "id"])
-result.save_to_disk("/data/Datasets-LLMS/CodeFeedback-Filtered-Instruction-Transformed")
+result.save_to_disk("/data/Datasets-LLMS/moss-002-sft-data-Transformed")
