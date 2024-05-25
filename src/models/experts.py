@@ -48,11 +48,12 @@ class ExpertsModule(nn.Module):
         self.experts = nn.ModuleList([Expert(config) for _ in range(self.num_experts)])
 
     def forward(self, hidden_states: Tensor, expert_indices: Tensor) -> Tensor:
-        outputs = []
+        outputs = torch.zeros_like(hidden_states)
         expert_indices = expert_indices.permute(1, 0)
         for i, expert_index_tensor in enumerate(expert_indices):
             ones_indices = torch.nonzero(expert_index_tensor)
             expert_batch = torch.index_select(hidden_states, 0, ones_indices.view(-1))
-            outputs.append(self.experts[i](expert_batch))
+            output = self.experts[i](expert_batch)
+            outputs.index_add_(0, ones_indices.view(-1), output)
 
         return outputs
