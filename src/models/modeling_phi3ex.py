@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple, Union
-from torch import FloatTensor, LongTensor, Tensor
+from torch import FloatTensor, LongTensor, Tensor, nn
 from transformers.modeling_outputs import BaseModelOutputWithPast, CausalLMOutputWithPast
 from transformers.models.phi3.configuration_phi3 import Phi3Config
 from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
@@ -54,6 +54,9 @@ class Phi3exDecoderLayer(Phi3DecoderLayer):
 class Phi3exModel(Phi3Model):
     def __init__(self, config: Phi3Config):
         super().__init__(config)
+        self.layers = nn.ModuleList(
+            [Phi3exDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
+        )
 
     def forward(self, 
                 input_ids: LongTensor = None, 
@@ -195,6 +198,7 @@ class Phi3exModel(Phi3Model):
 class Phi3exForCausalLM(Phi3ForCausalLM):
     def __init__(self, config: Phi3Config):
         super().__init__(config)
+        self.model = Phi3exModel(config)
 
     def forward(self, 
                 input_ids: LongTensor = None, 
