@@ -41,6 +41,7 @@ class ExpertsModule(nn.Module):
 class Phi3exDecoderLayer(Phi3DecoderLayer):
     def __init__(self, config: Phi3Config, layer_idx: int):
         super().__init__(config, layer_idx)
+        del self.mlp
         self.mlp = ExpertsModule(config)
 
     def forward(self, 
@@ -85,6 +86,7 @@ class Phi3exDecoderLayer(Phi3DecoderLayer):
 class Phi3exModel(Phi3Model):
     def __init__(self, config: Phi3Config):
         super().__init__(config)
+        del self.layers
         self.layers = nn.ModuleList(
             [Phi3exDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
@@ -229,6 +231,7 @@ class Phi3exModel(Phi3Model):
 class Phi3exForCausalLM(Phi3ForCausalLM):
     def __init__(self, config: Phi3Config):
         super().__init__(config)
+        del self.model
         self.model = Phi3exModel(config)
 
     def forward(self, 
