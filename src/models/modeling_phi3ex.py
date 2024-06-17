@@ -5,6 +5,7 @@ from transformers.models.phi3.configuration_phi3 import Phi3Config
 from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
 from torch.nn import CrossEntropyLoss
 import torch
+import re
 
 class Gate(nn.Module):
     def __init__(self, config: Phi3Config) -> None:
@@ -294,3 +295,34 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+    
+def transfer_phi3_weights(model: Phi3ForCausalLM, model_new: Phi3exForCausalLM, num_experts: int) -> Phi3exForCausalLM:
+    """Transfers weights from Phi3ForCausalLM to Phi3exForCausalLM. Specifically copies weights directly except for mlp layer where first all experts are
+    created and each is transferred the original mlp weights. First the mlp.gate_up_proj and down_proj are identified. Once identified the
+    mlp.identified_proj_layer is replaced with mlp.experts.expert_id.identified_proj_layer and then its assigned the original weights.
+
+    Args:
+        model (Phi3ForCausalLM): The pretrained Phi3 model for CausalLM whose weights we want to transfer
+        model_new (Phi3exForCausalLM): The new experts model where we want to transfer those pretrained weights
+        num_experts (int): The number of experts in the new Phi3ex model.
+
+    Returns:
+        Phi3exForCausalLM: The Phi3ex model with the pretrained weights loaded
+    """
+
+    weights_dict = model.state_dict()
+    replacement_holder = "mlp.experts.%s"
+    for key in list(weights_dict):
+        searched_op = re.search(r"(model\.layers\.\d{1,4}\.mlp\.gate_up_proj\.weight)|(model\.layers\.\d{1,4}\.mlp\.down_proj\.weight)", key)
+        if not searched_op:
+            continue
+
+        mlp_type = searched_op.group()
+        weights = weights_dict.pop(mlp_type)
+
+        for i in range(num_experts):
+            replace_layer = re.sub(r"mlp", replacement_holder % i, mlp_type)
+            weights_dict[replace_layer] = weights
+
+    model_new.load_state_dict(weights_dict)
+    return model_new
