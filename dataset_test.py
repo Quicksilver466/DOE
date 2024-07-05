@@ -78,5 +78,3 @@ def chatml_transform_phi3_datasets():
         dataset = load_from_disk(dataset_path)
         results = dataset.map(chatml_transform)
         results.save_to_disk(os.path.join(datasets_base_save_path, f"{dataset_name.split('/')[-1]}-Phi-3-ChatML"))
-
-chatml_transform_phi3_datasets()
