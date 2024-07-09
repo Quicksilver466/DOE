@@ -1,4 +1,7 @@
 from transformers import AutoTokenizer
+from src.utils.glob_vars import GlobalVars
+
+GV = GlobalVars()
 
 def get_tokenizer(tokenizer_path="/data/LLM-weights/Phi-3-mini-128k-instruct"):
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, add_eos_token=True)
@@ -20,9 +23,9 @@ def tokenzie_transform(example):
     output = TOKENIZER(
         example["text"],
         add_special_tokens=True,
-        truncation=True,
-        padding=True,
-        max_length=720,
+        truncation=GV.get_gv().get("DATASET_CONFIGS").get("truncation"),
+        padding=GV.get_gv().get("DATASET_CONFIGS").get("padding"),
+        max_length=GV.get_gv().get("DATASET_CONFIGS").get("max_length"),
         return_overflowing_tokens=False,
         return_length=False
     )
