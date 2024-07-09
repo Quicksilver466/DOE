@@ -1,8 +1,8 @@
 from datasets import load_dataset, load_from_disk
 from datasets import disable_caching
-from src.datasets.datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
-from src.datasets.datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
-from src.datasets.datasets_chatml_transforms import chatml_transform
+from src.datasets.sft_datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
+from src.datasets.sft_datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
+from src.datasets.generic_datasets_transforms import chatml_transform
 import os
 
 disable_caching()
