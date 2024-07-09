@@ -17,5 +17,6 @@ def get_tokenizer(tokenizer_path="/data/LLM-weights/Phi-3-mini-128k-instruct"):
         }
     )
     tokenizer.pad_token = chat_format_tokens.pad_token
+    tokenizer.cls_token = chat_format_tokens.cls_token
 
     return tokenizer
