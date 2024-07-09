@@ -2,10 +2,11 @@ from src.utils.glob_vars import GlobalVars
 
 GV = GlobalVars()
 
-def chatml_transform(example):
+def chatml_transform(example, add_cls_token=True):
     messages = example["text"]
     chatml_messages = GV.get_gv().get("TOKENIZER").apply_chat_template(messages, add_generation_prompt=True, tokenize=True)
     chatml_messages.append(GV.get_gv().get("TOKENIZER").eos_token_id)
+    chatml_messages = [GV.get_gv().get("TOKENIZER").cls_token_id] + chatml_messages if add_cls_token else chatml_messages
 
     return {"text": GV.get_gv().get("TOKENIZER").decode(chatml_messages)}
 
