@@ -1,7 +1,8 @@
 from transformers import AutoTokenizer
 
 def get_tokenizer(tokenizer_path="/data/LLM-weights/Phi-3-mini-128k-instruct"):
-    return AutoTokenizer.from_pretrained(tokenizer_path, add_eos_token=True)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, add_eos_token=True)
+    return tokenizer
 
 TOKENIZER = get_tokenizer()
 
@@ -11,3 +12,22 @@ def chatml_transform(example):
     chatml_messages.append(TOKENIZER.eos_token_id)
 
     return {"text": TOKENIZER.decode(chatml_messages)}
+
+def add_CLS_token(example):
+    pass
+
+def tokenzie_transform(example):
+    output = TOKENIZER(
+        example["text"],
+        add_special_tokens=True,
+        truncation=True,
+        padding=True,
+        max_length=720,
+        return_overflowing_tokens=False,
+        return_length=False
+    )
+
+    return {
+        "input_ids": output["input_ids"],
+        "attention_mask": output["attention_mask"]
+    }
