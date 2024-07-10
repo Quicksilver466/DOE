@@ -162,4 +162,3 @@ cython_debug/
 # Test files at the project dir's root
 ./*_test.py
 ./test_*
-./fx_test.py
