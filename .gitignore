@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 
 # Test files at the project dir's root
-./*_test.py
+*_test.py
 ./test_*
