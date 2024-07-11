@@ -1,5 +1,14 @@
 import json
+from typing import Literal
+import os
 
-def load_configs(config_path: str) -> dict:
+CONFIGS_BASE_PATH = "./src/configs"
+CONFIGS_FILENAMES = {
+    "dataset": "dataset-configs.json",
+    "model": "model-configs.json"
+}
+
+def load_configs(config_type: Literal["dataset", "model"]) -> dict:
+    config_path = os.path.join(CONFIGS_BASE_PATH, CONFIGS_FILENAMES.get(config_type))
     dataset_configs = json.load(open(config_path, "r"))
     return dataset_configs
