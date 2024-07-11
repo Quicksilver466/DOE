@@ -4,7 +4,8 @@ This project is a novel attempt on task based MoEs(Mixture of Experts) and its p
 
 These experts code / architecture wise are just like the experts we have in Mixture of Experts i.e MLP layer replaced by specialized MLP layers(experts / sparse MoE layers). The difference is in the routing mechanism where instead of routing individual tokens to different experts, we would be routing complete sequence to different experts. Another difference would again be in the routing mechanism and the number of experts. In normal MoE layers the number of experts are fixed and the routing network is made to only cater those experts. But with this project I hope to make the model more flexible with respect to number of experts and type of experts. Each expert would be associated with a set of gating weights which would decide whether or not the expert should process the input or not. Essentialy each expert would choose the type of input it wants to process.
 
-![Task-MoE-Colored-2](https://github.com/Quicksilver466/DOE/assets/40929815/a2c39dcb-59fd-43a3-b787-71bc2e0fc458)
+![DOE-gate-fixed](https://github.com/Quicksilver466/DOE/assets/40929815/ea719338-811f-4ad6-914f-59bf71a9d393)
+
 
 The next goal is to further modify the experts so that any and all modalities can be tackled. This will open tons of multimodal applications for the Model.
 
