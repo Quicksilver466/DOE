@@ -170,6 +170,10 @@ class Phi3exModel(Phi3Model):
                 sliding_window=self.config.sliding_window,
             )
 
+        attention_mask[0, 0, ..., 0] = torch.finfo(inputs_embeds.dtype).min
+        if(attention_mask.shape[-1] == attention_mask.shape[-2]):
+            attention_mask[0, 0, 0] = torch.zeros_like(attention_mask[0, 0, 0])
+
         hidden_states = inputs_embeds
 
         # decoder layers
