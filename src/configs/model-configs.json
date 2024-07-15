@@ -1,0 +1,4 @@
+{
+    "num_local_experts": 1,
+    "threshold": 0.5
+}

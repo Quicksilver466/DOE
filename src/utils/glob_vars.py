@@ -1,6 +1,5 @@
-import os
 from src.utils.utils import load_configs
-from src.models.llm_tokenizers import get_tokenizer
+from src.models.prepare_tokenizer import get_tokenizer
 
 def singleton(cls):
     instances = {}
@@ -13,11 +12,11 @@ def singleton(cls):
 @singleton
 class GlobalVars:
     def __init__(self) -> None:
-        self.configs_base_path = "./src/configs"
         self.set_gv()
 
     def set_gv(self):
-        self.dataset_configs = load_configs(os.path.join(self.configs_base_path, "dataset-configs.json"))
+        self.dataset_configs = load_configs("dataset")
+        self.model_configs = load_configs("model")
         self.tokenizer = get_tokenizer()
         
     def get_gv(self):
