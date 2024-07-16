@@ -16,7 +16,7 @@ class Phi3exModelOutput(ModelOutput):
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
     attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
     gating_loss: Optional[torch.FloatTensor] = None
-    gating_logits: Optional[torch.FloatTensor]
+    gating_logits: Optional[torch.FloatTensor] = None
 
 class Gate(nn.Module):
     def __init__(self, config: Phi3Config) -> None:
