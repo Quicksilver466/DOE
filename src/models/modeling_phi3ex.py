@@ -3,7 +3,7 @@ from torch import FloatTensor, LongTensor, Tensor, nn
 from transformers.modeling_outputs import BaseModelOutputWithPast, ModelOutput
 from transformers.models.phi3.configuration_phi3 import Phi3Config
 from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, NLLLoss, Module, Sigmoid, LogSigmoid, ModuleList, Linear
 import torch
 import re
 from dataclasses import dataclass
@@ -16,28 +16,29 @@ class Phi3exModelOutput(ModelOutput):
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
     attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
     gating_loss: Optional[torch.FloatTensor] = None
-    gating_logits: Optional[torch.FloatTensor] = None
+    gating_output: Optional[torch.FloatTensor] = None
 
-class Gate(nn.Module):
+class Gate(Module):
     def __init__(self, config: Phi3Config) -> None:
         super().__init__()
         self.hidden_dim = config.hidden_size
         self.num_experts = config.num_local_experts
-        self.gate = nn.Linear(self.hidden_dim, self.num_experts, bias=False)
-        self.sig_func = nn.Sigmoid()
+        self.gate = Linear(self.hidden_dim, self.num_experts, bias=False)
+        self.sig_func = Sigmoid()
+        self.logsig_func = LogSigmoid()
         self.threshold = config.threshold
 
-    def forward(self, cls_hidden_states: Tensor) -> Tensor:
+    def forward(self, cls_hidden_states: Tensor) -> list[Tensor]:
         gating_logits = self.gate(cls_hidden_states)
         gating_output = self.sig_func(gating_logits)
         gating_output = torch.where(gating_output > self.threshold, 1, 0)
-        return gating_output
+        return [self.logsig_func(gating_logits), gating_output]
 
-class ExpertsModule(nn.Module):
+class ExpertsModule(Module):
     def __init__(self, config: Phi3Config) -> None:
         super().__init__()
         self.num_experts = config.num_local_experts
-        self.experts = nn.ModuleList([Phi3MLP(config) for _ in range(self.num_experts)])
+        self.experts = ModuleList([Phi3MLP(config) for _ in range(self.num_experts)])
 
     def forward(self, hidden_states: Tensor, expert_indices: Tensor) -> Tensor:
         outputs = torch.zeros_like(hidden_states)
@@ -249,6 +250,9 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         super().__init__(config)
         del self.model
         self.model = Phi3exModel(config)
+        self.gating_model = Gate(config)
+        self.loss_fct = CrossEntropyLoss()
+        self.gating_loss_fct = NLLLoss()
 
     def forward(self, 
                 input_ids: LongTensor = None, 
@@ -261,7 +265,8 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
                 output_attentions: bool | None = None, 
                 output_hidden_states: bool | None = None, 
                 return_dict: bool | None = None,
-                expert_indices: Tensor | None = None) -> Tuple | Phi3exModelOutput:
+                expert_indices: Tensor | None = None,
+                compute_gating: bool | None = False) -> Tuple | Phi3exModelOutput:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -286,18 +291,23 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         logits = self.lm_head(hidden_states)
         logits = logits.float()
 
+        gating_logsigs, gating_output= self.gating_model(hidden_states[..., 0, :]) if compute_gating else None, None
+        if(compute_gating and expert_indices):
+            gating_loss = self.gating_loss_fct(gating_logsigs, expert_indices)
+        else:
+            gating_loss = None
+
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
-            loss_fct = CrossEntropyLoss()
             shift_logits = shift_logits.view(-1, self.config.vocab_size)
             shift_labels = shift_labels.view(-1)
             # Enable model parallelism
             shift_labels = shift_labels.to(shift_logits.device)
-            loss = loss_fct(shift_logits, shift_labels)
+            loss = self.loss_fct(shift_logits, shift_labels)
 
         if not return_dict:
             output = (logits,) + outputs[1:]
@@ -309,6 +319,8 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
+            gating_loss=gating_loss,
+            gating_output=gating_output
         )
     
     def prepare_inputs_for_generation(
@@ -358,6 +370,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             model_inputs = {"input_ids": input_ids}
 
         expert_indices = kwargs.get("expert_indices", None)
+        compute_gating = kwargs.get("compute_gating", False)
 
         model_inputs.update(
             {
