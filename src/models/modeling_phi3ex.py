@@ -3,7 +3,7 @@ from torch import FloatTensor, LongTensor, Tensor, nn
 from transformers.modeling_outputs import BaseModelOutputWithPast, ModelOutput
 from transformers.models.phi3.configuration_phi3 import Phi3Config
 from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
-from torch.nn import CrossEntropyLoss, NLLLoss, Module, Sigmoid, LogSigmoid, ModuleList, Linear
+from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEWithLogitsLoss
 import torch
 import re
 from dataclasses import dataclass
@@ -25,14 +25,13 @@ class Gate(Module):
         self.num_experts = config.num_local_experts
         self.gate = Linear(self.hidden_dim, self.num_experts, bias=False)
         self.sig_func = Sigmoid()
-        self.logsig_func = LogSigmoid()
         self.threshold = config.threshold
 
     def forward(self, cls_hidden_states: Tensor) -> tuple[Tensor]:
         gating_logits = self.gate(cls_hidden_states)
         gating_output = self.sig_func(gating_logits)
         gating_output = torch.where(gating_output > self.threshold, 1, 0)
-        return self.logsig_func(gating_logits), gating_output
+        return gating_logits, gating_output
 
 class ExpertsModule(Module):
     def __init__(self, config: Phi3Config) -> None:
@@ -252,7 +251,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         self.model = Phi3exModel(config)
         self.gating_model = Gate(config)
         self.loss_fct = CrossEntropyLoss()
-        self.gating_loss_fct = NLLLoss()
+        self.gating_loss_fct = BCEWithLogitsLoss()
 
     def forward(self, 
                 input_ids: LongTensor = None, 
@@ -272,6 +271,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        expert_indices = expert_indices.type(torch.FloatTensor)
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs = self.model(
@@ -291,10 +291,11 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         logits = self.lm_head(hidden_states)
         logits = logits.float()
 
-        gating_logsigs, gating_output = self.gating_model(hidden_states[..., 0, :]) if compute_gating else None, None
-        if(compute_gating and expert_indices):
-            gating_loss = self.gating_loss_fct(gating_logsigs, expert_indices)
+        if(compute_gating):
+            gating_logits, gating_output = self.gating_model(hidden_states[..., 0, :])
+            gating_loss = self.gating_loss_fct(gating_logits, expert_indices)
         else:
+            gating_output = None
             gating_loss = None
 
         loss = None
@@ -408,6 +409,8 @@ def transfer_phi3_weights(model: Phi3ForCausalLM, model_new: Phi3exForCausalLM, 
         for i in range(num_experts):
             replace_layer = re.sub(r"mlp", replacement_holder % i, mlp_type)
             weights_dict[replace_layer] = weights
+
+    weights_dict["gating_model.gate.weight"] = model_new.state_dict()["gating_model.gate.weight"]
 
     model_new.load_state_dict(weights_dict)
     return model_new
