@@ -1,32 +1,43 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from torch import FloatTensor, LongTensor, Tensor, nn
-from transformers.modeling_outputs import BaseModelOutputWithPast, CausalLMOutputWithPast
+from transformers.modeling_outputs import BaseModelOutputWithPast, ModelOutput
 from transformers.models.phi3.configuration_phi3 import Phi3Config
 from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEWithLogitsLoss
 import torch
 import re
+from dataclasses import dataclass
 
-class Gate(nn.Module):
+@dataclass
+class Phi3exModelOutput(ModelOutput):
+    loss: Optional[torch.FloatTensor] = None
+    logits: torch.FloatTensor = None
+    past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
+    hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
+    attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
+    gating_loss: Optional[torch.FloatTensor] = None
+    gating_output: Optional[torch.FloatTensor] = None
+
+class Gate(Module):
     def __init__(self, config: Phi3Config) -> None:
         super().__init__()
         self.hidden_dim = config.hidden_size
         self.num_experts = config.num_local_experts
-        self.gate = nn.Linear(self.hidden_dim, self.num_experts, bias=False)
-        self.sig_func = nn.Sigmoid()
+        self.gate = Linear(self.hidden_dim, self.num_experts, bias=False)
+        self.sig_func = Sigmoid()
         self.threshold = config.threshold
 
-    def forward(self, cls_hidden_states: Tensor) -> Tensor:
+    def forward(self, cls_hidden_states: Tensor) -> tuple[Tensor]:
         gating_logits = self.gate(cls_hidden_states)
         gating_output = self.sig_func(gating_logits)
         gating_output = torch.where(gating_output > self.threshold, 1, 0)
-        return gating_output
+        return gating_logits, gating_output
 
-class ExpertsModule(nn.Module):
+class ExpertsModule(Module):
     def __init__(self, config: Phi3Config) -> None:
         super().__init__()
         self.num_experts = config.num_local_experts
-        self.experts = nn.ModuleList([Phi3MLP(config) for _ in range(self.num_experts)])
+        self.experts = ModuleList([Phi3MLP(config) for _ in range(self.num_experts)])
 
     def forward(self, hidden_states: Tensor, expert_indices: Tensor) -> Tensor:
         outputs = torch.zeros_like(hidden_states)
@@ -238,6 +249,9 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         super().__init__(config)
         del self.model
         self.model = Phi3exModel(config)
+        self.gating_model = Gate(config)
+        self.loss_fct = CrossEntropyLoss()
+        self.gating_loss_fct = BCEWithLogitsLoss()
 
     def forward(self, 
                 input_ids: LongTensor = None, 
@@ -250,12 +264,14 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
                 output_attentions: bool | None = None, 
                 output_hidden_states: bool | None = None, 
                 return_dict: bool | None = None,
-                expert_indices: Tensor | None = None) -> Tuple | CausalLMOutputWithPast:
+                expert_indices: Tensor | None = None,
+                compute_gating: bool | None = False) -> Tuple | Phi3exModelOutput:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        expert_indices = expert_indices.type(torch.FloatTensor)
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs = self.model(
@@ -275,30 +291,96 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         logits = self.lm_head(hidden_states)
         logits = logits.float()
 
+        if(compute_gating):
+            gating_logits, gating_output = self.gating_model(hidden_states[..., 0, :])
+            gating_loss = self.gating_loss_fct(gating_logits, expert_indices)
+        else:
+            gating_output = None
+            gating_loss = None
+
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
-            loss_fct = CrossEntropyLoss()
             shift_logits = shift_logits.view(-1, self.config.vocab_size)
             shift_labels = shift_labels.view(-1)
             # Enable model parallelism
             shift_labels = shift_labels.to(shift_logits.device)
-            loss = loss_fct(shift_logits, shift_labels)
+            loss = self.loss_fct(shift_logits, shift_labels)
 
         if not return_dict:
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 
-        return CausalLMOutputWithPast(
+        return Phi3exModelOutput(
             loss=loss,
             logits=logits,
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
+            gating_loss=gating_loss,
+            gating_output=gating_output
         )
+    
+    def prepare_inputs_for_generation(
+        self, input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs
+    ):
+        if past_key_values is not None:
+            if isinstance(past_key_values, Cache):
+                cache_length = past_key_values.get_seq_length()
+                past_length = past_key_values.seen_tokens
+                max_cache_length = past_key_values.get_max_length()
+            else:
+                cache_length = past_length = past_key_values[0][0].shape[2]
+                max_cache_length = None
+
+            # Keep only the unprocessed tokens:
+            # 1 - If the length of the attention_mask exceeds the length of input_ids, then we are in a setting where
+            # some of the inputs are exclusively passed as part of the cache (e.g. when passing input_embeds as
+            # input)
+            if attention_mask is not None and attention_mask.shape[1] > input_ids.shape[1]:
+                input_ids = input_ids[:, -(attention_mask.shape[1] - past_length) :]
+            # 2 - If the past_length is smaller than input_ids', then input_ids holds all input tokens. We can discard
+            # input_ids based on the past_length.
+            elif past_length < input_ids.shape[1]:
+                input_ids = input_ids[:, past_length:]
+            # 3 - Otherwise (past_length >= input_ids.shape[1]), let's assume input_ids only has unprocessed tokens.
+
+            # If we are about to go beyond the maximum cache length, we need to crop the input attention mask.
+            if (
+                max_cache_length is not None
+                and attention_mask is not None
+                and cache_length + input_ids.shape[1] > max_cache_length
+            ):
+                attention_mask = attention_mask[:, -max_cache_length:]
+
+        position_ids = kwargs.get("position_ids", None)
+        if attention_mask is not None and position_ids is None:
+            # create position_ids on the fly for batch generation
+            position_ids = attention_mask.long().cumsum(-1) - 1
+            position_ids.masked_fill_(attention_mask == 0, 1)
+            if past_key_values:
+                position_ids = position_ids[:, -input_ids.shape[1] :]
+
+        # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
+        if inputs_embeds is not None and past_key_values is None:
+            model_inputs = {"inputs_embeds": inputs_embeds}
+        else:
+            model_inputs = {"input_ids": input_ids}
+
+        model_inputs.update(
+            {
+                "position_ids": position_ids,
+                "past_key_values": past_key_values,
+                "use_cache": kwargs.get("use_cache"),
+                "attention_mask": attention_mask,
+                "expert_indices": kwargs.get("expert_indices", None),
+                "compute_gating": kwargs.get("compute_gating", False)
+            }
+        )
+        return model_inputs
     
 def transfer_phi3_weights(model: Phi3ForCausalLM, model_new: Phi3exForCausalLM, num_experts: int) -> Phi3exForCausalLM:
     """Transfers weights from Phi3ForCausalLM to Phi3exForCausalLM. Specifically copies weights directly except for mlp layer where first all experts are
@@ -327,6 +409,8 @@ def transfer_phi3_weights(model: Phi3ForCausalLM, model_new: Phi3exForCausalLM, 
         for i in range(num_experts):
             replace_layer = re.sub(r"mlp", replacement_holder % i, mlp_type)
             weights_dict[replace_layer] = weights
+
+    weights_dict["gating_model.gate.weight"] = model_new.state_dict()["gating_model.gate.weight"]
 
     model_new.load_state_dict(weights_dict)
     return model_new
