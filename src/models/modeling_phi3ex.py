@@ -369,16 +369,14 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         else:
             model_inputs = {"input_ids": input_ids}
 
-        expert_indices = kwargs.get("expert_indices", None)
-        compute_gating = kwargs.get("compute_gating", False)
-
         model_inputs.update(
             {
                 "position_ids": position_ids,
                 "past_key_values": past_key_values,
                 "use_cache": kwargs.get("use_cache"),
                 "attention_mask": attention_mask,
-                "expert_indices": expert_indices
+                "expert_indices": kwargs.get("expert_indices", None),
+                "compute_gating": kwargs.get("compute_gating", False)
             }
         )
         return model_inputs
