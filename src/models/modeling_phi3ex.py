@@ -15,6 +15,7 @@ class Phi3exModelOutput(ModelOutput):
     past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
     attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
+    ar_loss: Optional[torch.FloatTensor] = None
     gating_loss: Optional[torch.FloatTensor] = None
     gating_output: Optional[torch.FloatTensor] = None
 
@@ -298,7 +299,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             gating_output = None
             gating_loss = None
 
-        loss = None
+        ar_loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
@@ -308,7 +309,16 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             shift_labels = shift_labels.view(-1)
             # Enable model parallelism
             shift_labels = shift_labels.to(shift_logits.device)
-            loss = self.loss_fct(shift_logits, shift_labels)
+            ar_loss = self.loss_fct(shift_logits, shift_labels)
+
+        if(gating_loss is not None and ar_loss is not None):
+            loss = self.config.gating_loss_weight * gating_loss + self.config.ar_loss_weight * ar_loss
+        elif(gating_loss is not None and ar_loss is None):
+            loss = gating_loss
+        elif(ar_loss is not None and gating_loss is None):
+            loss = ar_loss
+        else:
+            loss = None
 
         if not return_dict:
             output = (logits,) + outputs[1:]
@@ -320,6 +330,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
+            ar_loss=ar_loss,
             gating_loss=gating_loss,
             gating_output=gating_output
         )
