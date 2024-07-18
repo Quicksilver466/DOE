@@ -19,6 +19,8 @@ def get_model_for_training(model_path="/data/LLM-weights/Phi-3-mini-128k-instruc
     phi3_config = Phi3Config.from_pretrained(model_path)
     phi3_config.num_local_experts = CONFIGS.get("num_local_experts")
     phi3_config.threshold = CONFIGS.get("threshold")
+    phi3_config.ar_loss_weight = CONFIGS.get("ar_loss_weight", 0.7)
+    phi3_config.gating_loss_weight = CONFIGS.get("gating_loss_weight", 0.3)
 
     new_model = Phi3exForCausalLM(phi3_config)
 

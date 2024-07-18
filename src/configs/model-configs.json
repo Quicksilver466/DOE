@@ -1,4 +1,6 @@
 {
     "num_local_experts": 1,
-    "threshold": 0.5
+    "threshold": 0.5,
+    "ar_loss_weight": 0.7,
+    "gating_loss_weight": 0.3
 }
