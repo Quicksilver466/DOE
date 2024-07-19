@@ -1,6 +1,7 @@
 import json
 from typing import Literal
 import os
+import logging
 
 CONFIGS_BASE_PATH = "./src/configs"
 CONFIGS_FILENAMES = {
@@ -10,6 +11,8 @@ CONFIGS_FILENAMES = {
     "lora": "lora-configs.json",
     "sft-trainer": "sft-trainer-configs.json"
 }
+
+ERROR_LOGGER = logging.getLogger("DOE-Error")
 
 def load_configs(config_type: Literal["dataset", "model", "trainer", "lora", "sft-trainer"]) -> dict:
     config_path = os.path.join(CONFIGS_BASE_PATH, CONFIGS_FILENAMES.get(config_type))
@@ -39,5 +42,5 @@ def save_config(config: dict, config_type: Literal["dataset", "model", "trainer"
         json.dump(config, open(config_path, "w"), cls=cls)
         return True
     except BaseException as e:
-        print(e)
+        ERROR_LOGGER.exception(f"Could not save config for type: {config_type} because of exception: {e}")
         return False
