@@ -13,6 +13,9 @@ CONFIGS_FILENAMES = {
 
 ERROR_LOGGER = logging.getLogger("DOE-Error")
 
+def create_dir_if_not_exists(path: str) -> None:
+    if not os.path.exists(): os.makedirs(path)
+
 def load_configs(config_type: Literal["dataset", "model", "trainer", "lora", "sft-trainer"], configs_base_path="./src/configs") -> dict:
     config_path = os.path.join(configs_base_path, CONFIGS_FILENAMES.get(config_type))
     configs = json.load(open(config_path, "r"))
@@ -41,6 +44,7 @@ def save_config(
         bool: Returns whether saving operation was successful or not. Incase it isn't successful, logger will log appropriate exception
     """
     try:
+        create_dir_if_not_exists(configs_base_path)
         config_path = os.path.join(configs_base_path, CONFIGS_FILENAMES.get(config_type))
         cls = SetEncoder if use_set_encoder else None
         json.dump(config, open(config_path, "w"), cls=cls)
