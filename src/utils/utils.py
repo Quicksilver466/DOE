@@ -15,8 +15,8 @@ ERROR_LOGGER = logging.getLogger("DOE-Error")
 
 def load_configs(config_type: Literal["dataset", "model", "trainer", "lora", "sft-trainer"], configs_base_path="./src/configs") -> dict:
     config_path = os.path.join(configs_base_path, CONFIGS_FILENAMES.get(config_type))
-    dataset_configs = json.load(open(config_path, "r"))
-    return dataset_configs
+    configs = json.load(open(config_path, "r"))
+    return configs
 
 class SetEncoder(json.JSONEncoder):
     def default(self, obj):
