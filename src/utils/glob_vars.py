@@ -17,6 +17,8 @@ class GlobalVars:
     def set_gv(self):
         self.dataset_configs = load_configs("dataset")
         self.model_configs = load_configs("model")
+        self.trainer_configs = load_configs("trainer")
+        self.lora_configs = load_configs("lora")
         self.tokenizer = get_tokenizer()
         
     def get_gv(self):

@@ -26,6 +26,7 @@ def get_model_for_training(model_path="/data/LLM-weights/Phi-3-mini-128k-instruc
 
     new_model = transfer_phi3_weights(old_model, new_model, phi3_config.num_local_experts)
 
+    new_model.resize_token_embeddings(len(tokenizer))
     with torch.no_grad():
         new_model.model.embed_tokens.weight[tokenizer.cls_token_id] = torch.zeros(phi3_config.hidden_size)
 
