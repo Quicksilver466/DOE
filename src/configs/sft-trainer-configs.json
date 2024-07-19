@@ -1,0 +1,5 @@
+{
+    "dataset_text_field": "text",
+    "packing": false,
+    "max_seq_length": 720
+}

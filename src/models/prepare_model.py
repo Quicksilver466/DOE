@@ -30,5 +30,7 @@ def get_model_for_training(model_path="/data/LLM-weights/Phi-3-mini-128k-instruc
     with torch.no_grad():
         new_model.model.embed_tokens.weight[tokenizer.cls_token_id] = torch.zeros(phi3_config.hidden_size)
 
+    new_model.gradient_checkpointing_enable()
+
     del old_model
     return new_model
