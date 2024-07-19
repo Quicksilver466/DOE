@@ -22,10 +22,10 @@ def get_sft_trainer(model: Phi3exForCausalLM, tokenizer: PreTrainedTokenizer, da
         args=training_arguments,
         train_dataset=dataset,
         tokenizer=tokenizer,
-        dataset_text_field=sft_trainer_configs.get("dataset_text_field"),
+        dataset_text_field=sft_trainer_configs.get("dataset_text_field", "text"),
         peft_config=lora_config,
-        packing=sft_trainer_configs.get("packing"),
-        max_seq_length=sft_trainer_configs.get("max_seq_length")
+        packing=sft_trainer_configs.get("packing", False),
+        max_seq_length=sft_trainer_configs.get("max_seq_length", 720)
     )
 
     return trainer
