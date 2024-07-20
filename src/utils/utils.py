@@ -14,7 +14,7 @@ CONFIGS_FILENAMES = {
 ERROR_LOGGER = logging.getLogger("DOE-Error")
 
 def create_dir_if_not_exists(path: str) -> None:
-    if not os.path.exists(): os.makedirs(path)
+    if not os.path.exists(path): os.makedirs(path)
 
 def load_configs(config_type: Literal["dataset", "model", "trainer", "lora", "sft-trainer"], configs_base_path="./src/configs") -> dict:
     config_path = os.path.join(configs_base_path, CONFIGS_FILENAMES.get(config_type))

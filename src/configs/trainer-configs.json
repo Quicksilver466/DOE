@@ -1,5 +1,5 @@
 {
-    "output_dir": "/content/gdrive/MyDrive/Colab Notebooks/LLMs/Results/mlflow_v2",
+    "output_dir": "./tmp/LLMs/Results/mlflow_v2",
     "overwrite_output_dir": false,
     "do_train": false,
     "do_eval": false,
@@ -28,7 +28,7 @@
     "log_level": "error",
     "log_level_replica": "warning",
     "log_on_each_node": true,
-    "logging_dir": "/content/gdrive/MyDrive/Colab Notebooks/LLMs/Results/mlflow_v2/runs/Jul19_23-34-00_fedora",
+    "logging_dir": "./tmp/LLMs/Results/mlflow_v2/runs/Jul19_23-34-00_fedora",
     "logging_strategy": "steps",
     "logging_first_step": false,
     "logging_steps": 1,
