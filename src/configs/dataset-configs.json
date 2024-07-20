@@ -1,5 +1,5 @@
 {
-    "max_length": 720,
+    "max_length": 1024,
     "truncation": true,
     "padding": true
 }
