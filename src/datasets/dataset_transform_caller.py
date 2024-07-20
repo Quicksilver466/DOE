@@ -3,15 +3,10 @@ from datasets import disable_caching
 from src.datasets.sft_datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
 from src.datasets.sft_datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
 from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform
+from utils.utils import create_dir_if_not_exists
 import os
 
 disable_caching()
-
-def exists_else_create(path):
-    if os.path.exists(path):
-        return
-    
-    os.mkdir(path)
 
 def std_transformation():
     datasets = {
@@ -66,7 +61,7 @@ def apply_generic_func(
         datasets_base_save_path="/data/Datasets-LLMS/Chatml-CLS-Phi-3-Datasets",
         func_to_map=chatml_transform
 ):
-    exists_else_create(datasets_base_save_path)
+    create_dir_if_not_exists(datasets_base_save_path)
 
     datasets = {
         "m-a-p/CodeFeedback-Filtered-Instruction": os.path.join(datasets_base_path, "CodeFeedback-Filtered-Instruction-Transformed-phi3"),
