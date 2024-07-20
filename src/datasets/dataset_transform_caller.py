@@ -3,15 +3,11 @@ from datasets import disable_caching
 from src.datasets.sft_datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
 from src.datasets.sft_datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
 from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform
+from src.utils.utils import create_dir_if_not_exists
 import os
+import torch
 
 disable_caching()
-
-def exists_else_create(path):
-    if os.path.exists(path):
-        return
-    
-    os.mkdir(path)
 
 def std_transformation():
     datasets = {
@@ -66,7 +62,7 @@ def apply_generic_func(
         datasets_base_save_path="/data/Datasets-LLMS/Chatml-CLS-Phi-3-Datasets",
         func_to_map=chatml_transform
 ):
-    exists_else_create(datasets_base_save_path)
+    create_dir_if_not_exists(datasets_base_save_path)
 
     datasets = {
         "m-a-p/CodeFeedback-Filtered-Instruction": os.path.join(datasets_base_path, "CodeFeedback-Filtered-Instruction-Transformed-phi3"),
@@ -75,7 +71,10 @@ def apply_generic_func(
         "fnlp/moss-002-sft-data": os.path.join(datasets_base_path, "moss-002-sft-data-Transformed-phi3")
     }
 
-    for dataset_name, dataset_path in datasets.items():
+    for i, (dataset_name, dataset_path) in enumerate(datasets.items()):
+        expert_indices = torch.zeros((1, len(datasets)))
+        expert_indices[0, i] = 1
         dataset = load_from_disk(dataset_path)
-        results = dataset.map(func_to_map)
+        results = dataset.map(func_to_map, fn_kwargs={"expert_indices": expert_indices}, remove_columns=["text"])
+        results.set_format("pt", columns=["input_ids", "attention_mask", "expert_indices"]) # needed since map transforms torch tensor back to python list
         results.save_to_disk(os.path.join(datasets_base_save_path, f"{dataset_name.split('/')[-1]}-Transformed-phi3"))

@@ -1,4 +1,4 @@
-from ..utils.prompts import *
+from src.utils.prompts import *
 import re
 
 def code_feedback_transform(example):
