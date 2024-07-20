@@ -2,7 +2,7 @@ from datasets import load_dataset, load_from_disk
 from datasets import disable_caching
 from src.datasets.sft_datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
 from src.datasets.sft_datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
-from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform
+from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform, concat_shuffle_datasets
 from src.utils.utils import create_dir_if_not_exists
 import os
 import torch
@@ -58,9 +58,9 @@ def phi3_transformation():
     result.save_to_disk("/data/Datasets-LLMS/Transformed-Phi-3-Datasets/moss-002-sft-data-Transformed-phi3")
 
 def apply_generic_func(
-        datasets_base_path="/data/Datasets-LLMS/Transformed-Phi-3-Datasets", 
-        datasets_base_save_path="/data/Datasets-LLMS/Chatml-CLS-Phi-3-Datasets",
-        func_to_map=chatml_transform
+    datasets_base_path="/data/Datasets-LLMS/Transformed-Phi-3-Datasets", 
+    datasets_base_save_path="/data/Datasets-LLMS/Chatml-CLS-Phi-3-Datasets",
+    func_to_map=chatml_transform
 ):
     create_dir_if_not_exists(datasets_base_save_path)
 
@@ -78,3 +78,24 @@ def apply_generic_func(
         results = dataset.map(func_to_map, fn_kwargs={"expert_indices": expert_indices}, remove_columns=["text"])
         results.set_format("pt", columns=["input_ids", "attention_mask", "expert_indices"]) # needed since map transforms torch tensor back to python list
         results.save_to_disk(os.path.join(datasets_base_save_path, f"{dataset_name.split('/')[-1]}-Transformed-phi3"))
+
+def merge_datasets(
+    datasets_base_path="/data/Datasets-LLMS/Chatml-CLS-Phi-3-Tokenized-Datasets", 
+    datasets_base_save_path="/data/Datasets-LLMS/Chatml-CLS-Phi-3-Tokenized-Merged-Datasets"
+):
+    create_dir_if_not_exists(datasets_base_save_path)
+
+    datasets = {
+        "m-a-p/CodeFeedback-Filtered-Instruction": os.path.join(datasets_base_path, "CodeFeedback-Filtered-Instruction-Transformed-phi3"),
+        "TIGER-Lab/MathInstruct": os.path.join(datasets_base_path, "MathInstruct-Transformed-phi3"),
+        "lavita/ChatDoctor-HealthCareMagic-100k": os.path.join(datasets_base_path, "ChatDoctor-HealthCareMagic-100k-Transformed-phi3"),
+        "fnlp/moss-002-sft-data": os.path.join(datasets_base_path, "moss-002-sft-data-Transformed-phi3")
+    }
+
+    datasets_to_merge = []
+    for _, dataset_path in datasets.items():
+        dataset = load_from_disk(dataset_path)
+        datasets_to_merge.append(dataset)
+
+    merged_shuffled_dataset = concat_shuffle_datasets(datasets_to_merge)
+    merged_shuffled_dataset.save_to_disk(os.path.join(datasets_base_save_path, "Merged-Shuffled-phi3-tokenized"))
