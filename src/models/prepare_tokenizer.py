@@ -4,7 +4,7 @@ class SpecialTokens:
     cls_token = "[CLS]"
     pad_token = "<|pad|>"
 
-def get_tokenizer(tokenizer_path="/data/LLM-weights/Phi-3-mini-128k-instruct"):
+def get_tokenizer(tokenizer_path="./tmp/models/Phi-3-mini-128k-instruct"):
     chat_format_tokens = SpecialTokens
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, add_eos_token=True)
 

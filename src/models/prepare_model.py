@@ -6,13 +6,13 @@ import torch
 
 CONFIGS = load_configs("model")
 
-def get_model_for_inference(model_path="/data/LLM-weights/Phi-3-mini-128k-instruct"):
+def get_model_for_inference(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     phi3_config = Phi3Config.from_pretrained(model_path)
     model = Phi3exForCausalLM(phi3_config)
 
     return model
 
-def get_model_for_training(model_path="/data/LLM-weights/Phi-3-mini-128k-instruct"):
+def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     old_model = AutoModelForCausalLM.from_pretrained(model_path)
     tokenizer = get_tokenizer(model_path)
 
