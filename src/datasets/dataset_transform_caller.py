@@ -76,4 +76,5 @@ def apply_generic_func(
         expert_indices[0, i] = 1
         dataset = load_from_disk(dataset_path)
         results = dataset.map(func_to_map, fn_kwargs={"expert_indices": expert_indices}, remove_columns=["text"])
+        results.set_format("pt", columns=["input_ids", "attention_mask", "expert_indices"]) # needed since map transforms torch tensor back to python list
         results.save_to_disk(os.path.join(datasets_base_save_path, f"{dataset_name.split('/')[-1]}-Transformed-phi3"))
