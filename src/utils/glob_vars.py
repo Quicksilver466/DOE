@@ -1,5 +1,8 @@
 from src.utils.utils import load_configs
 from src.models.prepare_tokenizer import get_tokenizer
+from src.models.prepare_model import get_model_for_training
+from src.datasets.prepare_dataset import get_dataset
+from src.trainers.prepare_sft_trainer import get_sft_trainer
 import logging
 
 def singleton(cls):
@@ -29,7 +32,10 @@ class GlobalVars:
         self.trainer_configs = load_configs("trainer")
         self.lora_configs = load_configs("lora")
         self.sft_trainer_configs = load_configs("sft-trainer")
+        self.dataset = get_dataset()
         self.tokenizer = get_tokenizer()
+        self.model = get_model_for_training()
+        self.sft_trainer = get_sft_trainer(self.model, self.tokenizer, self.dataset)
 
         self.info_logger.info("Global Variables Set")
         
@@ -41,5 +47,8 @@ class GlobalVars:
             "DATASET_CONFIGS": self.dataset_configs,
             "TRAINER_CONFIGS": self.trainer_configs,
             "LORA_CONFIGS": self.lora_configs,
-            "SFT-TRAINER-CONFIGS": self.sft_trainer_configs
+            "SFT_TRAINER_CONFIGS": self.sft_trainer_configs,
+            "DATASET": self.dataset,
+            "MODEL": self.model,
+            "SFT_TRAINER": self.sft_trainer
         }
