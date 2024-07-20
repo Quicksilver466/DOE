@@ -1,4 +1,5 @@
 from src.utils.glob_vars import GlobalVars
+from datasets import Dataset, concatenate_datasets
 
 GV = GlobalVars()
 
@@ -27,3 +28,10 @@ def tokenize_transform(example, expert_indices):
         "attention_mask": output["attention_mask"],
         "expert_indices": expert_indices
     }
+
+def concat_shuffle_datasets(datasets: list[Dataset]):
+    merged_dataset: Dataset = concatenate_datasets(datasets)
+    shuffled_dataset = merged_dataset.shuffle()
+    shuffled_dataset.flatten_indices()
+
+    return shuffled_dataset
