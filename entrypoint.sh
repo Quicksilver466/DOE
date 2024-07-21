@@ -6,6 +6,8 @@ curl -o gitlfs.tar.gz -L https://github.com/git-lfs/git-lfs/releases/download/v3
 tar -xvzf gitlfs.tar.gz
 git lfs install
 
+cd ./code
+
 makedir -p ./tmp/datasets
 cd ./tmp/datasets
 git clone https://huggingface.co/datasets/Quicksilver1/DOE-Merged-Tokenized-v1
