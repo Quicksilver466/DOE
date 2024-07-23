@@ -2,22 +2,12 @@
 
 set -e
 
-curl -o gitlfs.tar.gz -L https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-amd64-v3.5.1.tar.gz
-tar -xvzf gitlfs.tar.gz
-git lfs install
+huggingface-cli login --token $HUGGINGFACE_TOKEN --add-to-git-credential
 
-cd ./code
+mkdir -p ./tmp/datasets/DOE-Merged-Tokenized-v1
+mkdir -p ./tmp/models/Phi-3-mini-128k-instruct
 
-makedir -p ./tmp/datasets
-cd ./tmp/datasets
-git clone https://huggingface.co/datasets/Quicksilver1/DOE-Merged-Tokenized-v1
-cd ..
-cd ..
-
-makedir -p ./tmp/models
-cd ./tmp/models
-git clone https://huggingface.co/microsoft/Phi-3-mini-128k-instruct
-cd ..
-cd ..
+huggingface-cli download Quicksilver1/DOE-Merged-Tokenized-v1 --repo-type dataset --local-dir /code/tmp/datasets/DOE-Merged-Tokenized-v1
+huggingface-cli download microsoft/Phi-3-mini-128k-instruct --local-dir /code/tmp/models/Phi-3-mini-128k-instruct
 
 echo success
