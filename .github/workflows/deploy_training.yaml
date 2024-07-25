@@ -1,0 +1,35 @@
+name: Deploy to DockerHub
+on:
+  push:
+    branches:
+      - training
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to DockerHub
+    runs-on: ubuntu-latest
+    environment: training
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: DockerHub Login
+        uses: docker/login-action@v3
+        with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: DockerHub Metadata Extraction (Tags and Labels)
+        uses: docker/metadata-action@v5
+        with:
+            images: name/app
+
+      - name: Build Docker Image and Push to DockerHub
+        uses: docker/build-push-action@v6
+        with:
+            push: true
+            context: "{{defaultContext}}"
+            tags: ${{ steps.meta.outputs.tags }}
+            labels: ${{ steps.meta.outputs.labels }}
+            file: ./Dockerfile
