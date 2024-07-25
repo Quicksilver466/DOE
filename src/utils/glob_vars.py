@@ -27,11 +27,13 @@ class GlobalVars:
 
         self.info_logger.info("Setting Global Variables")
 
+        self.info_logger.info("Loading all the Configs")
         self.dataset_configs = load_configs("dataset")
         self.model_configs = load_configs("model")
         self.trainer_configs = load_configs("trainer")
         self.lora_configs = load_configs("lora")
         self.sft_trainer_configs = load_configs("sft-trainer")
+        self.info_logger.info("All configs loaded")
         self.dataset = get_dataset()
         self.tokenizer = get_tokenizer()
         self.model = get_model_for_training()
