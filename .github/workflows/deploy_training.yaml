@@ -21,12 +21,10 @@ jobs:
             password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: DockerHub Metadata Extraction (Tags and Labels)
+        id: meta
         uses: docker/metadata-action@v5
         with:
             images: name/app
-
-      - name: Sanity Test Tag
-        run: echo tags
 
       - name: Build Docker Image and Push to DockerHub
         uses: docker/build-push-action@v6
