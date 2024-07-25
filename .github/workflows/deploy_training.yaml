@@ -24,7 +24,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-            images: name/app
+            images: qucksilver466/doe
 
       - name: Build Docker Image and Push to DockerHub
         uses: docker/build-push-action@v6
