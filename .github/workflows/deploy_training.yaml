@@ -26,7 +26,7 @@ jobs:
             images: name/app
 
       - name: Sanity Test Tag
-        run: echo ${{ steps.meta.outputs.tags }}
+        run: echo tags
 
       - name: Build Docker Image and Push to DockerHub
         uses: docker/build-push-action@v6
