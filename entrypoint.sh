@@ -22,4 +22,4 @@ mkdir -p "$model_complete_path"
 huggingface-cli download $dataset_name --repo-type dataset --local-dir $dataset_complete_path
 huggingface-cli download $model_name --local-dir $model_complete_path
 
-echo success
+python trainer.py
