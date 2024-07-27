@@ -20,10 +20,10 @@ class GlobalVars:
 
     def set_gv(self):
         self.info_logger = logging.getLogger("DOE-Info")
-        self.info_logger.setLevel(logging.INFO)
+        self.info_logger.setLevel(logging.DEBUG)
 
         self.error_logger = logging.getLogger("DOE-Error")
-        self.error_logger.setLevel(logging.ERROR)
+        self.error_logger.setLevel(logging.DEBUG)
 
         self.info_logger.info("Setting Global Variables")
 
