@@ -2,7 +2,8 @@ from typing import List, Tuple, Optional
 from torch import FloatTensor, LongTensor, Tensor, nn
 from transformers.modeling_outputs import BaseModelOutputWithPast, ModelOutput
 from transformers.models.phi3.configuration_phi3 import Phi3Config
-from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
+from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, Cache, DynamicCache, logger
+from transformers.modeling_attn_mask_utils import _prepare_4d_causal_attention_mask
 from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEWithLogitsLoss
 import torch
 import re
