@@ -45,7 +45,7 @@ def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
         new_model.model.embed_tokens.weight[tokenizer.cls_token_id] = torch.zeros(phi3_config.hidden_size)
 
     INFO_LOGGER.info("Moving model to GPU")
-    model_new = model_new.to(torch.device(0))
+    new_model = new_model.to(torch.device(0))
 
     INFO_LOGGER.info("Enabling gradient checkpointing")
     new_model.gradient_checkpointing_enable()
