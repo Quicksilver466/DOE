@@ -14,6 +14,8 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     model_save_name = model_save_path.split("/")[-1]
     create_dir_if_not_exists(model_save_base_path)
 
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
+    mlflow.login(interactive=False)
     mlflow.set_experiment(experiment_id=os.environ.get("MLFLOW_EXPERIMENT_ID"))
 
     GV.get_gv().get("INFO_LOGGER").info("Starting the Training")
