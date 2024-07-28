@@ -5,20 +5,14 @@
     "revision": null,
     "task_type": "CAUSAL_LM",
     "inference_mode": false,
-    "r": 32,
-    "target_modules": [
-      "q_proj",
-      "dense",
-      "v_proj",
-      "k_proj"
-    ],
+    "r": 16,
+    "target_modules": "all-linear",
     "lora_alpha": 16,
     "lora_dropout": 0.05,
     "fan_in_fan_out": false,
     "bias": "none",
     "use_rslora": false,
     "modules_to_save": [
-      "embed_tokens",
       "lm_head"
     ],
     "init_lora_weights": true,
