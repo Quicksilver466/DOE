@@ -1,8 +1,11 @@
 from transformers import AutoTokenizer
 import logging
+from src.utils.utils import load_configs
 
 INFO_LOGGER = logging.getLogger("DOE-Info")
 ERROR_LOGGER = logging.getLogger("DOE-Error")
+
+CONFIGS = load_configs("dataset")
 
 class SpecialTokens:
     cls_token = "[CLS]"
@@ -12,7 +15,11 @@ def get_tokenizer(tokenizer_path="./tmp/models/Phi-3-mini-128k-instruct"):
     try:
         INFO_LOGGER.info("Setting up Tokenizer")
         chat_format_tokens = SpecialTokens
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, add_eos_token=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_path, 
+            add_eos_token=True, 
+            padding_side=CONFIGS.get("padding_side")
+        )
     
         tokenizer.add_special_tokens(
             {

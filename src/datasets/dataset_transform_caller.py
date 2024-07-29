@@ -98,4 +98,4 @@ def merge_datasets(
         datasets_to_merge.append(dataset)
 
     merged_shuffled_dataset = concat_shuffle_datasets(datasets_to_merge)
-    merged_shuffled_dataset.save_to_disk(os.path.join(datasets_base_save_path, "Merged-Shuffled-phi3-tokenized"))
+    merged_shuffled_dataset.save_to_disk(os.path.join(datasets_base_save_path, "Merged-Shuffled-phi3-tokenized-padded"))
