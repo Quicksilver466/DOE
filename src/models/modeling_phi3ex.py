@@ -43,6 +43,9 @@ class ExpertsModule(Module):
 
     def forward(self, hidden_states: Tensor, expert_indices: Tensor) -> Tensor:
         outputs = torch.zeros_like(hidden_states)
+        # shape_index = [i for i in range(len(expert_indices.shape))]
+        # shape_index[-1], shape_index[-2] = shape_index[-2], shape_index[-1]
+        # expert_indices = torch.permute(expert_indices, tuple(shape_index))
         expert_indices = expert_indices.permute(1, 0)
         for i, expert_index_tensor in enumerate(expert_indices):
             ones_indices = torch.nonzero(expert_index_tensor)

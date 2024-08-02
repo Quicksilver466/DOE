@@ -7,7 +7,7 @@ huggingface-cli login --token $HUGGINGFACE_TOKEN --add-to-git-credential
 datasets_base_path="./tmp/datasets"
 models_base_path="./tmp/models"
 
-dataset_name="Quicksilver1/DOE-quadtask-tokenized-merged"
+dataset_name="Quicksilver1/DOE-quadtask-tokenized-merged-flattened"
 model_name="microsoft/Phi-3-mini-128k-instruct"
 
 dataset_filename="${dataset_name##*/}"
