@@ -277,6 +277,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
         expert_indices = expert_indices.type(torch.FloatTensor)
+        expert_indices = expert_indices.to(torch.device(0))
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs = self.model(
