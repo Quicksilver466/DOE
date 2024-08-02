@@ -4,7 +4,7 @@ import logging
 INFO_LOGGER = logging.getLogger("DOE-Info")
 ERROR_LOGGER = logging.getLogger("DOE-Error")
 
-def get_dataset(dataset_path="./tmp/datasets/DOE-quadtask-tokenized-merged"):
+def get_dataset(dataset_path="./tmp/datasets/DOE-quadtask-tokenized-merged-flattened"):
     try:
         INFO_LOGGER.info("Loading Dataset")
         dataset = load_from_disk(dataset_path=dataset_path)
