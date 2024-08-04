@@ -8,9 +8,6 @@ from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEW
 import torch
 import re
 from dataclasses import dataclass
-import logging
-
-INFO_LOGGER = logging.getLogger("DOE-Info")
 
 @dataclass
 class Phi3exModelOutput(ModelOutput):
@@ -318,9 +315,6 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             # Enable model parallelism
             shift_labels = shift_labels.to(shift_logits.device)
             ar_loss = self.loss_fct(shift_logits, shift_labels)
-
-        INFO_LOGGER.info(f"The gating loss is: {gating_loss}")
-        INFO_LOGGER.info(f"The Auto Regressive Loss is: {ar_loss}")
 
         if(gating_loss is not None and ar_loss is not None):
             loss = self.config.gating_loss_weight * gating_loss + self.config.ar_loss_weight * ar_loss
