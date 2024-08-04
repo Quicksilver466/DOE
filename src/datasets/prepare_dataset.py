@@ -8,6 +8,7 @@ def get_dataset(dataset_path="./tmp/datasets/DOE-quadtask-tokenized-merged-flatt
     try:
         INFO_LOGGER.info("Loading Dataset")
         dataset = load_from_disk(dataset_path=dataset_path)
+        dataset = dataset.to_iterable_dataset()
         INFO_LOGGER.info("Dataset Loaded")
         return dataset
     

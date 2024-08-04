@@ -94,7 +94,7 @@
     "optim": "paged_adamw_8bit",
     "optim_args": null,
     "adafactor": false,
-    "group_by_length": true,
+    "group_by_length": false,
     "length_column_name": "length",
     "report_to": [
       "mlflow"
