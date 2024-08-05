@@ -33,6 +33,9 @@ class Gate(Module):
         self.threshold = config.threshold
 
     def forward(self, cls_hidden_states: Tensor) -> tuple[Tensor]:
+        INFO_LOGGER.info(f"The Linear Layer parameters are: \n")
+        for name, param in self.gate.named_parameters():
+            INFO_LOGGER.info(f"{name}: {param}\n")
         gating_logits = self.gate(cls_hidden_states)
         gating_output = self.sig_func(gating_logits)
         gating_output = torch.where(gating_output > self.threshold, 1, 0)
