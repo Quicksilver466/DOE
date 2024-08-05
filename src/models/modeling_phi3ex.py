@@ -301,6 +301,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         logits = logits.float()
 
         if(compute_gating):
+            INFO_LOGGER.info(f"The cls token inputs are: \n{hidden_states[..., 0, :]}\n\n")
             gating_logits, gating_output = self.gating_model(hidden_states[..., 0, :])
             gating_loss = self.gating_loss_fct(gating_logits, expert_indices)
         else:
@@ -318,11 +319,6 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
             # Enable model parallelism
             shift_labels = shift_labels.to(shift_logits.device)
             ar_loss = self.loss_fct(shift_logits, shift_labels)
-
-        INFO_LOGGER.info(f"The gating logits are: {gating_logits}")
-        INFO_LOGGER.info(f"The expert_indices are: {expert_indices}")
-        INFO_LOGGER.info(f"The gating loss is: {gating_loss}")
-        INFO_LOGGER.info(f"The Auto Regressive Loss is: {ar_loss}")
 
         if(gating_loss is not None and ar_loss is not None):
             loss = self.config.gating_loss_weight * gating_loss + self.config.ar_loss_weight * ar_loss
