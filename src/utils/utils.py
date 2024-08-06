@@ -2,6 +2,7 @@ import json
 from typing import Literal
 import os
 import logging
+import mlflow
 
 CONFIGS_FILENAMES = {
     "dataset": "dataset-configs.json",
@@ -52,3 +53,8 @@ def save_config(
     except BaseException as e:
         ERROR_LOGGER.exception(f"Could not save config for type: {config_type} because of exception: {e}")
         return False
+    
+def setup_mlflow():
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
+    mlflow.login(interactive=False)
+    mlflow.set_experiment(experiment_id=os.environ.get("MLFLOW_EXPERIMENT_ID"))

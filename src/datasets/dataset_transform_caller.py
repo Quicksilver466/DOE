@@ -2,7 +2,7 @@ from datasets import load_dataset, load_from_disk
 from datasets import disable_caching
 from src.datasets.sft_datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
 from src.datasets.sft_datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
-from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform, concat_shuffle_datasets
+from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform, concat_shuffle_datasets, flatten_expert_indices
 from src.utils.utils import create_dir_if_not_exists
 import os
 import torch
@@ -98,4 +98,9 @@ def merge_datasets(
         datasets_to_merge.append(dataset)
 
     merged_shuffled_dataset = concat_shuffle_datasets(datasets_to_merge)
-    merged_shuffled_dataset.save_to_disk(os.path.join(datasets_base_save_path, "Merged-Shuffled-phi3-tokenized"))
+    merged_shuffled_dataset.save_to_disk(os.path.join(datasets_base_save_path, "Merged-Shuffled-phi3-tokenized-padded"))
+
+def flatten_column(dataset_path="/data/Datasets-LLMS/LFS-test/DOE-quadtask-tokenized-merged"):
+    dataset = load_from_disk(dataset_path)
+    dataset = dataset.map(flatten_expert_indices, cache_file_name="/data/Datasets-LLMS/temp-hf-cache/cache_dir.bin")
+    dataset.save_to_disk(dataset_path + "-Flattened")

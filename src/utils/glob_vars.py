@@ -3,6 +3,7 @@ from src.models.prepare_tokenizer import get_tokenizer
 from src.models.prepare_model import get_model_for_training
 from src.datasets.prepare_dataset import get_dataset
 from src.trainers.prepare_sft_trainer import get_sft_trainer
+from src.utils.hooks import HookRegistry
 import logging
 
 def singleton(cls):
@@ -19,6 +20,8 @@ class GlobalVars:
         self.set_gv()
 
     def set_gv(self):
+        logging.basicConfig()
+
         self.info_logger = logging.getLogger("DOE-Info")
         self.info_logger.setLevel(logging.INFO)
 
@@ -27,14 +30,18 @@ class GlobalVars:
 
         self.info_logger.info("Setting Global Variables")
 
+        self.info_logger.info("Loading all the Configs")
         self.dataset_configs = load_configs("dataset")
         self.model_configs = load_configs("model")
         self.trainer_configs = load_configs("trainer")
         self.lora_configs = load_configs("lora")
         self.sft_trainer_configs = load_configs("sft-trainer")
+        self.info_logger.info("All configs loaded")
         self.dataset = get_dataset()
         self.tokenizer = get_tokenizer()
         self.model = get_model_for_training()
+        self.hook_registry = HookRegistry(self.model)
+        self.hook_registry.register_hooks()
         self.sft_trainer = get_sft_trainer(self.model, self.tokenizer, self.dataset)
 
         self.info_logger.info("Global Variables Set")

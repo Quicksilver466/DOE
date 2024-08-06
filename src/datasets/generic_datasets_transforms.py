@@ -19,8 +19,7 @@ def tokenize_transform(example, expert_indices):
         padding=GV.get_gv().get("DATASET_CONFIGS").get("padding"),
         max_length=GV.get_gv().get("DATASET_CONFIGS").get("max_length"),
         return_overflowing_tokens=False,
-        return_length=False,
-        return_tensors="pt"
+        return_length=False
     )
 
     return {
@@ -35,3 +34,7 @@ def concat_shuffle_datasets(datasets: list[Dataset]):
     shuffled_dataset.flatten_indices()
 
     return shuffled_dataset
+
+def flatten_expert_indices(example):
+    example["expert_indices"] = example["expert_indices"][0]
+    return example
