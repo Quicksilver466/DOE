@@ -2,7 +2,8 @@ from typing import List, Tuple, Optional
 from torch import FloatTensor, LongTensor, Tensor, nn
 from transformers.modeling_outputs import BaseModelOutputWithPast, ModelOutput
 from transformers.models.phi3.configuration_phi3 import Phi3Config
-from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, _prepare_4d_causal_attention_mask, Cache, DynamicCache, logger
+from transformers.models.phi3.modeling_phi3 import Phi3ForCausalLM, Phi3Model, Phi3DecoderLayer, Phi3MLP, Phi3Config, Cache, DynamicCache, logger
+from transformers.modeling_attn_mask_utils import _prepare_4d_causal_attention_mask
 from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEWithLogitsLoss
 import torch
 import re
@@ -42,6 +43,9 @@ class ExpertsModule(Module):
 
     def forward(self, hidden_states: Tensor, expert_indices: Tensor) -> Tensor:
         outputs = torch.zeros_like(hidden_states)
+        # shape_index = [i for i in range(len(expert_indices.shape))]
+        # shape_index[-1], shape_index[-2] = shape_index[-2], shape_index[-1]
+        # expert_indices = torch.permute(expert_indices, tuple(shape_index))
         expert_indices = expert_indices.permute(1, 0)
         for i, expert_index_tensor in enumerate(expert_indices):
             ones_indices = torch.nonzero(expert_index_tensor)
@@ -182,9 +186,9 @@ class Phi3exModel(Phi3Model):
                 sliding_window=self.config.sliding_window,
             )
 
-        attention_mask[0, 0, ..., 0] = torch.finfo(inputs_embeds.dtype).min
+        attention_mask[..., 0] = torch.finfo(inputs_embeds.dtype).min
         if(attention_mask.shape[-1] == attention_mask.shape[-2]):
-            attention_mask[0, 0, 0] = torch.zeros_like(attention_mask[0, 0, 0])
+            attention_mask[..., 0, :] = torch.zeros_like(attention_mask[0, 0, 0])
 
         hidden_states = inputs_embeds
 
@@ -273,6 +277,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
         expert_indices = expert_indices.type(torch.FloatTensor)
+        expert_indices = expert_indices.to(torch.device(0))
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs = self.model(
