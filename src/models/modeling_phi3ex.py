@@ -8,9 +8,6 @@ from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEW
 import torch
 import re
 from dataclasses import dataclass
-import logging
-
-INFO_LOGGER = logging.getLogger("DOE-Info")
 
 @dataclass
 class Phi3exModelOutput(ModelOutput):
@@ -33,9 +30,6 @@ class Gate(Module):
         self.threshold = config.threshold
 
     def forward(self, cls_hidden_states: Tensor) -> tuple[Tensor]:
-        INFO_LOGGER.info(f"The Linear Layer parameters are: \n")
-        for name, param in self.gate.named_parameters():
-            INFO_LOGGER.info(f"{name}: {param}\n")
         gating_logits = self.gate(cls_hidden_states)
         gating_output = self.sig_func(gating_logits)
         gating_output = torch.where(gating_output > self.threshold, 1, 0)
@@ -192,9 +186,9 @@ class Phi3exModel(Phi3Model):
                 sliding_window=self.config.sliding_window,
             )
 
-        attention_mask[0, 0, ..., 0] = torch.finfo(inputs_embeds.dtype).min
+        attention_mask[..., 0] = torch.finfo(inputs_embeds.dtype).min
         if(attention_mask.shape[-1] == attention_mask.shape[-2]):
-            attention_mask[0, 0, 0] = torch.zeros_like(attention_mask[0, 0, 0])
+            attention_mask[..., 0, :] = torch.zeros_like(attention_mask[0, 0, 0])
 
         hidden_states = inputs_embeds
 
@@ -304,7 +298,6 @@ class Phi3exForCausalLM(Phi3ForCausalLM):
         logits = logits.float()
 
         if(compute_gating):
-            INFO_LOGGER.info(f"The cls token inputs are: \n{hidden_states[..., 0, :]}\n\n")
             gating_logits, gating_output = self.gating_model(hidden_states[..., 0, :])
             gating_loss = self.gating_loss_fct(gating_logits, expert_indices)
         else:

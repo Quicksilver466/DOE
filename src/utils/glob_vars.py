@@ -3,7 +3,7 @@ from src.models.prepare_tokenizer import get_tokenizer
 from src.models.prepare_model import get_model_for_training
 from src.datasets.prepare_dataset import get_dataset
 from src.trainers.prepare_sft_trainer import get_sft_trainer
-from src.utils.hooks import HookRegistry, logitloss_hook
+from src.utils.hooks import HookRegistry
 import logging
 
 def singleton(cls):
@@ -40,9 +40,8 @@ class GlobalVars:
         self.dataset = get_dataset()
         self.tokenizer = get_tokenizer()
         self.model = get_model_for_training()
-        #self.hook_registry = HookRegistry()
-        #self.hook_registry.add_hook(self.model.gating_loss_fct, logitloss_hook)
-        #self.hook_registry.register_hooks()
+        self.hook_registry = HookRegistry(self.model)
+        self.hook_registry.register_hooks()
         self.sft_trainer = get_sft_trainer(self.model, self.tokenizer, self.dataset)
 
         self.info_logger.info("Global Variables Set")
