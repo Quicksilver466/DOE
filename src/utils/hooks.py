@@ -9,7 +9,7 @@ class HookRegistry():
     def __init__(self, model: Module) -> None:
         self.forward_registry: dict[Module, Callable] = {}
         self.backward_registry: dict[Module, Callable] = {}
-        self.add_all_hooks(model=model)
+        #self.add_all_hooks(model=model)
 
     def add_hook(self, module: Module, func: Callable):
         self.registry[module] = func
