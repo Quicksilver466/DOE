@@ -21,19 +21,6 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     
     GV.get_gv().get("INFO_LOGGER").info("Training Finished")
 
-    GV.get_gv().get("INFO_LOGGER").info("Logging final parameters and model to MLFlow")
-    last_run_id = mlflow.last_active_run().info.run_id
-    with mlflow.start_run(run_id=last_run_id):
-        mlflow.log_params(GV.get_gv().get("LORA_CONFIGS"))
-        mlflow.transformers.log_model(
-            {
-                "model": GV.get_gv().get("SFT_TRAINER").model, 
-                "tokenizer": GV.get_gv().get("TOKENIZER")
-            }, 
-            artifact_path="model", 
-            task="text-generation"
-        )
-
     GV.get_gv().get("INFO_LOGGER").info("Saving unmerged model through trainer")
     GV.get_gv().get("SFT_TRAINER").save_model(model_save_path)
     
@@ -60,6 +47,24 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         safe_serialization=True,
         max_shard_size="2GB",
     )
+
+    try:
+        GV.get_gv().get("INFO_LOGGER").info("Logging final parameters and model to MLFlow")
+        last_run_id = mlflow.last_active_run().info.run_id
+        with mlflow.start_run(run_id=last_run_id):
+            mlflow.log_params(GV.get_gv().get("LORA_CONFIGS"))
+            mlflow.log_params(GV.get_gv().get("TRAINER_CONFIGS"))
+            mlflow.transformers.log_model(
+                {
+                    "model": merged_model, 
+                    "tokenizer": GV.get_gv().get("TOKENIZER")
+                }, 
+                artifact_path="model", 
+                task="text-generation",
+                save_pretrained=True
+            )
+    except BaseException as e:
+        GV.get_gv().get("ERROR_LOGGER").exception(f"Couldn't log model to MLFlow because of following error: \n{e}")
 
     GV.get_gv().get("INFO_LOGGER").info("Training Pipeline Done")
 
