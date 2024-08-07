@@ -8,6 +8,7 @@ from torch.nn import CrossEntropyLoss, Module, Sigmoid, ModuleList, Linear, BCEW
 import torch
 import re
 from dataclasses import dataclass
+from huggingface_hub import PyTorchModelHubMixin
 
 @dataclass
 class Phi3exModelOutput(ModelOutput):
@@ -249,7 +250,7 @@ class Phi3exModel(Phi3Model):
             attentions=all_self_attns,
         )
 
-class Phi3exForCausalLM(Phi3ForCausalLM):
+class Phi3exForCausalLM(Phi3ForCausalLM, PyTorchModelHubMixin):
     def __init__(self, config: Phi3Config):
         super().__init__(config)
         del self.model
