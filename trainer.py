@@ -26,6 +26,8 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     
     del GV.model
     del GV.sft_trainer
+    GV.model = None
+    GV.sft_trainer = None
     gc.collect()
     torch.cuda.empty_cache()
 
