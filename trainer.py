@@ -71,4 +71,4 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     GV.get_gv().get("INFO_LOGGER").info("Training Pipeline Done")
 
 if __name__ == "__main__":
-    train(model_save_path=f"./tmp/models/DOE-SFT-{datetime.now().strftime('%Y-%m-%d-%H-%M-%s')}")
+    train(model_save_path=f"/workspace/models/DOE-SFT-{datetime.now().strftime('%Y-%m-%d-%H-%M-%s')}")

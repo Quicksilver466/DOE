@@ -3,5 +3,6 @@
     "threshold": 0.5,
     "ar_loss_weight": 0.7,
     "gating_loss_weight": 0.3,
-    "model_save_name": "Phi3-Ex-Untrained"
+    "untrained_model_save_base_path": "/workspace/models",
+    "untrained_model_save_name": "Phi3-Ex-Untrained"
 }
