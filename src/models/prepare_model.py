@@ -54,7 +54,7 @@ def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     INFO_LOGGER.info("Deleting old model")
     del old_model
 
-    untrained_model_save_path = os.path.join("/".join(model_path.split("/")[:-1]), CONFIGS.get("model_save_name"))
+    untrained_model_save_path = os.path.join(CONFIGS.get("untrained_model_save_base_path"), CONFIGS.get("untrained_model_save_name"))
     INFO_LOGGER.info(f"Saving untrained model at: {untrained_model_save_path}")
     new_model.save_pretrained(untrained_model_save_path)
 
