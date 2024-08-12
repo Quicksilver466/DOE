@@ -1,15 +1,17 @@
 from src.utils.glob_vars import GlobalVars
 import mlflow
 import os
-from peft import AutoPeftModelForCausalLM, PeftModel
+from peft import PeftModel
 from transformers import AutoModelForCausalLM
 from datetime import datetime
 from src.utils.utils import create_dir_if_not_exists, setup_mlflow, remove_dir
 import gc
 import torch
+from huggingface_hub import HfApi
 
 setup_mlflow()
 GV = GlobalVars()
+API = HfApi()
 
 def train(model_save_path="./tmp/models/DOE-SFT"):
     model_save_base_path = "/".join(model_save_path.split("/")[:-1])
@@ -51,11 +53,16 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     GV.get_gv().get("INFO_LOGGER").info(f"Saving Merged Model at path: {merged_model_save_path}")
     merged_model = peft_model.merge_and_unload()
     remove_dir(base_model_path)
-    merged_model.push_to_hub("Quicksilver1/DOE-Model-test", token=os.environ.get("HUGGINGFACE_TOKEN"))
     merged_model.save_pretrained(
         merged_model_save_path,
         safe_serialization=True,
         max_shard_size="2GB",
+    )
+
+    API.upload_folder(
+        repo_id="Quicksilver1/DOE-Model-test",
+        folder_path=merged_model_save_path,
+        repo_type="model"
     )
 
     try:
