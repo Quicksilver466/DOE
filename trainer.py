@@ -4,7 +4,7 @@ import os
 from peft import AutoPeftModelForCausalLM, PeftModel
 from transformers import AutoModelForCausalLM
 from datetime import datetime
-from src.utils.utils import create_dir_if_not_exists, setup_mlflow
+from src.utils.utils import create_dir_if_not_exists, setup_mlflow, remove_dir
 import gc
 import torch
 
@@ -38,7 +38,7 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_name")
     )
     base_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
-    model = PeftModel.from_pretrained(
+    peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,
         adapter_name="sft",
@@ -47,10 +47,11 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         trust_remote_code=True,
     )
 
-    GV.get_gv().get("INFO_LOGGER").info("Saving Merged Model")
     merged_model_save_path = os.path.join(model_save_base_path, f"Merged-{model_save_name}")
-    merged_model = model.merge_and_unload()
+    GV.get_gv().get("INFO_LOGGER").info(f"Saving Merged Model at path: {merged_model_save_path}")
+    merged_model = peft_model.merge_and_unload()
     merged_model.push_to_hub("Quicksilver1/DOE-Model-test", token=os.environ.get("HUGGINGFACE_TOKEN"))
+    remove_dir(base_model_path)
     merged_model.save_pretrained(
         merged_model_save_path,
         safe_serialization=True,
