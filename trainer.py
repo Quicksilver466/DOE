@@ -1,7 +1,8 @@
 from src.utils.glob_vars import GlobalVars
 import mlflow
 import os
-from peft import AutoPeftModelForCausalLM
+from peft import AutoPeftModelForCausalLM, PeftModel
+from transformers import AutoModelForCausalLM
 from datetime import datetime
 from src.utils.utils import create_dir_if_not_exists, setup_mlflow
 import gc
@@ -32,7 +33,13 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     torch.cuda.empty_cache()
 
     GV.get_gv().get("INFO_LOGGER").info("Loading Unmerged model for merger")
-    model = AutoPeftModelForCausalLM.from_pretrained(
+    base_model_path = os.path.join(
+        GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_base_path"),
+        GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_name")
+    )
+    base_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
+    model = PeftModel.from_pretrained(
+        base_model,
         model_save_path,
         adapter_name="sft",
         low_cpu_mem_usage=True,
