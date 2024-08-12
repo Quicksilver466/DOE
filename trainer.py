@@ -50,8 +50,8 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     merged_model_save_path = os.path.join(model_save_base_path, f"Merged-{model_save_name}")
     GV.get_gv().get("INFO_LOGGER").info(f"Saving Merged Model at path: {merged_model_save_path}")
     merged_model = peft_model.merge_and_unload()
-    merged_model.push_to_hub("Quicksilver1/DOE-Model-test", token=os.environ.get("HUGGINGFACE_TOKEN"))
     remove_dir(base_model_path)
+    merged_model.push_to_hub("Quicksilver1/DOE-Model-test", token=os.environ.get("HUGGINGFACE_TOKEN"))
     merged_model.save_pretrained(
         merged_model_save_path,
         safe_serialization=True,
