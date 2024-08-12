@@ -70,7 +70,6 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         last_run_id = mlflow.last_active_run().info.run_id
         with mlflow.start_run(run_id=last_run_id):
             mlflow.log_params(GV.get_gv().get("LORA_CONFIGS"))
-            mlflow.log_params(GV.get_gv().get("TRAINER_CONFIGS"))
             mlflow.transformers.log_model(
                 {
                     "model": merged_model, 
