@@ -56,7 +56,7 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     merged_model.save_pretrained(
         merged_model_save_path,
         safe_serialization=True,
-        max_shard_size="2GB",
+        max_shard_size="4GB",
     )
 
     API.upload_folder(
