@@ -59,6 +59,16 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         max_shard_size="4GB",
     )
 
+    GV.get_gv().get("INFO_LOGGER").info(f"Merged Model State Dicts are: \n{merged_model.state_dict().keys()}\n")
+
+    try:
+        API.create_repo(
+            "Quicksilver1/DOE-Model-test",
+            repo_type="model",
+        )
+    except:
+        pass
+
     API.upload_folder(
         repo_id="Quicksilver1/DOE-Model-test",
         folder_path=merged_model_save_path,
