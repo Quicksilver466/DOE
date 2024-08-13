@@ -49,6 +49,8 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         trust_remote_code=True,
     )
 
+    GV.get_gv().get("INFO_LOGGER").info(f"PEFT Model State Dicts are: \n{peft_model.state_dict().keys()}\n")
+
     merged_model_save_path = os.path.join(model_save_base_path, f"Merged-{model_save_name}")
     GV.get_gv().get("INFO_LOGGER").info(f"Saving Merged Model at path: {merged_model_save_path}")
     merged_model = peft_model.merge_and_unload()
@@ -58,8 +60,6 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         safe_serialization=True,
         max_shard_size="4GB",
     )
-
-    GV.get_gv().get("INFO_LOGGER").info(f"Merged Model State Dicts are: \n{merged_model.state_dict().keys()}\n")
 
     try:
         API.create_repo(
