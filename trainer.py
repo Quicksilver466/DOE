@@ -39,7 +39,9 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_base_path"),
         GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_name")
     )
+    GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: \n{base_model_path}\n")
     base_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
+    GV.get_gv().get("INFO_LOGGER").info(f"Base Model State Dicts are: \n{base_model.state_dict().keys()}\n")
     peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,
@@ -48,8 +50,6 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         device_map="auto",
         trust_remote_code=True,
     )
-
-    GV.get_gv().get("INFO_LOGGER").info(f"PEFT Model State Dicts are: \n{peft_model.state_dict().keys()}\n")
 
     merged_model_save_path = os.path.join(model_save_base_path, f"Merged-{model_save_name}")
     GV.get_gv().get("INFO_LOGGER").info(f"Saving Merged Model at path: {merged_model_save_path}")
