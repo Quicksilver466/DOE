@@ -2,8 +2,7 @@ from src.utils.glob_vars import GlobalVars
 import mlflow
 import os
 from peft import PeftModel
-from src.models.modeling_phi3ex import Phi3exForCausalLM
-from src.models.prepare_model import get_phi3ex_config
+from src.models.prepare_model import get_phi3ex_config, get_phi3ex_model_for_inference
 from datetime import datetime
 from src.utils.utils import create_dir_if_not_exists, setup_mlflow, remove_dir
 import gc
@@ -42,14 +41,14 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     )
     GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: {base_model_path}")
     base_model_config = get_phi3ex_config()
-    base_model = Phi3exForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path, config=base_model_config)
+    GV.get_gv().get("INFO_LOGGER").info(f"Phi-3ex config vocab size is: {base_model_config.vocab_size}")
+    base_model = get_phi3ex_model_for_inference(base_model_config, base_model_path)
     GV.get_gv().get("INFO_LOGGER").info(f"Loaded Base Model State Dicts are: \n{base_model.state_dict().keys()}\n")
     peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,
         adapter_name="sft",
         low_cpu_mem_usage=True,
-        device_map="auto",
         trust_remote_code=True,
     )
 
