@@ -3,6 +3,7 @@ import mlflow
 import os
 from peft import PeftModel
 from src.models.modeling_phi3ex import Phi3exForCausalLM
+from src.models.prepare_model import get_phi3ex_config
 from datetime import datetime
 from src.utils.utils import create_dir_if_not_exists, setup_mlflow, remove_dir
 import gc
@@ -40,7 +41,9 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_name")
     )
     GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: {base_model_path}")
-    base_model = Phi3exForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
+    base_model_config = get_phi3ex_config()
+    base_model = Phi3exForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path, config=base_model_config)
+    GV.get_gv().get("INFO_LOGGER").info(f"Loaded Base Model State Dicts are: \n{base_model.state_dict().keys()}\n")
     peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,
