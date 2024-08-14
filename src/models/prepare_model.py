@@ -58,6 +58,8 @@ def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     INFO_LOGGER.info(f"Saving untrained model at: {untrained_model_save_path}")
     new_model.save_pretrained(untrained_model_save_path)
 
+    INFO_LOGGER.info(f"new model state_dicts are: \n{new_model.state_dict().keys()}\n")
+
     INFO_LOGGER.info("Phi-3ex Model set")
 
     return new_model

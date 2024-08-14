@@ -41,7 +41,6 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     )
     GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: \n{base_model_path}\n")
     base_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
-    GV.get_gv().get("INFO_LOGGER").info(f"Base Model State Dicts are: \n{base_model.state_dict().keys()}\n")
     peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,
