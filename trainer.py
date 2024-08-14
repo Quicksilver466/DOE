@@ -2,7 +2,7 @@ from src.utils.glob_vars import GlobalVars
 import mlflow
 import os
 from peft import PeftModel
-from transformers import AutoModelForCausalLM
+from src.models.modeling_phi3ex import Phi3exForCausalLM
 from datetime import datetime
 from src.utils.utils import create_dir_if_not_exists, setup_mlflow, remove_dir
 import gc
@@ -39,8 +39,8 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_base_path"),
         GV.get_gv().get("MODEL_CONFIGS").get("untrained_model_save_name")
     )
-    GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: \n{base_model_path}\n")
-    base_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
+    GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: {base_model_path}")
+    base_model = Phi3exForCausalLM.from_pretrained(pretrained_model_name_or_path=base_model_path)
     peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,

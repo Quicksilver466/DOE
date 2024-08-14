@@ -20,6 +20,16 @@ def get_model_for_inference(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
 
     return model
 
+def get_phi3ex_config(base_model_path="./tmp/models/Phi-3-mini-128k-instruct"):
+    INFO_LOGGER.info("Setting up Phi-3 config")
+    phi3_config = Phi3Config.from_pretrained(base_model_path)
+    phi3_config.num_local_experts = CONFIGS.get("num_local_experts")
+    phi3_config.threshold = CONFIGS.get("threshold")
+    phi3_config.ar_loss_weight = CONFIGS.get("ar_loss_weight", 0.7)
+    phi3_config.gating_loss_weight = CONFIGS.get("gating_loss_weight", 0.3)
+    
+    return phi3_config
+
 def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     INFO_LOGGER.info("Setting up Phi-3ex Model")
 
@@ -27,12 +37,7 @@ def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     old_model = AutoModelForCausalLM.from_pretrained(model_path)
     tokenizer = get_tokenizer(model_path)
 
-    INFO_LOGGER.info("Setting up Phi-3 config")
-    phi3_config = Phi3Config.from_pretrained(model_path)
-    phi3_config.num_local_experts = CONFIGS.get("num_local_experts")
-    phi3_config.threshold = CONFIGS.get("threshold")
-    phi3_config.ar_loss_weight = CONFIGS.get("ar_loss_weight", 0.7)
-    phi3_config.gating_loss_weight = CONFIGS.get("gating_loss_weight", 0.3)
+    phi3_config = get_phi3ex_config(model_path)
 
     INFO_LOGGER.info("Loading new model")
     new_model = Phi3exForCausalLM(phi3_config)
@@ -57,8 +62,6 @@ def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     untrained_model_save_path = os.path.join(CONFIGS.get("untrained_model_save_base_path"), CONFIGS.get("untrained_model_save_name"))
     INFO_LOGGER.info(f"Saving untrained model at: {untrained_model_save_path}")
     new_model.save_pretrained(untrained_model_save_path)
-
-    INFO_LOGGER.info(f"new model state_dicts are: \n{new_model.state_dict().keys()}\n")
 
     INFO_LOGGER.info("Phi-3ex Model set")
 
