@@ -36,11 +36,11 @@ def get_phi3ex_config(base_model_path="./tmp/models/Phi-3-mini-128k-instruct"):
 def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     INFO_LOGGER.info("Setting up Phi-3ex Model")
 
-    INFO_LOGGER.info("Loading original model")
-    old_model = AutoModelForCausalLM.from_pretrained(model_path)
-    tokenizer = get_tokenizer(model_path)
-
     phi3_config = get_phi3ex_config(model_path)
+
+    INFO_LOGGER.info("Loading original model")
+    old_model = AutoModelForCausalLM.from_pretrained(model_path, config=phi3_config)
+    tokenizer = get_tokenizer(model_path)
 
     INFO_LOGGER.info("Loading new model")
     new_model = Phi3exForCausalLM(phi3_config)
