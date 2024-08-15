@@ -52,6 +52,7 @@ class GlobalVars:
             "ERROR_LOGGER": self.error_logger,
             "TOKENIZER": self.tokenizer,
             "DATASET_CONFIGS": self.dataset_configs,
+            "MODEL_CONFIGS": self.model_configs,
             "TRAINER_CONFIGS": self.trainer_configs,
             "LORA_CONFIGS": self.lora_configs,
             "SFT_TRAINER_CONFIGS": self.sft_trainer_configs,

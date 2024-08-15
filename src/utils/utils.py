@@ -3,6 +3,7 @@ from typing import Literal
 import os
 import logging
 import mlflow
+import shutil
 
 CONFIGS_FILENAMES = {
     "dataset": "dataset-configs.json",
@@ -12,6 +13,7 @@ CONFIGS_FILENAMES = {
     "sft-trainer": "sft-trainer-configs.json"
 }
 
+INFO_LOGGER = logging.getLogger("DOE-Info")
 ERROR_LOGGER = logging.getLogger("DOE-Error")
 
 def create_dir_if_not_exists(path: str) -> None:
@@ -54,6 +56,13 @@ def save_config(
         ERROR_LOGGER.exception(f"Could not save config for type: {config_type} because of exception: {e}")
         return False
     
+def remove_dir(dir_path):
+    try:
+        INFO_LOGGER.info(f"Removing {dir_path}")
+        shutil.rmtree(dir_path)
+    except BaseException as e:
+        ERROR_LOGGER.exception(f"Could not delete: {dir_path} because of exception: {e}")
+
 def setup_mlflow():
     mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
     mlflow.login(interactive=False)
