@@ -23,13 +23,11 @@ def get_phi3ex_model_for_inference(
 
 def get_phi3ex_config(base_model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     INFO_LOGGER.info("Setting up Phi-3 config")
-    tokenizer = get_tokenizer()
     phi3_config = Phi3Config.from_pretrained(base_model_path)
     phi3_config.num_local_experts = CONFIGS.get("num_local_experts")
     phi3_config.threshold = CONFIGS.get("threshold")
     phi3_config.ar_loss_weight = CONFIGS.get("ar_loss_weight", 0.7)
     phi3_config.gating_loss_weight = CONFIGS.get("gating_loss_weight", 0.3)
-    phi3_config.vocab_size = len(tokenizer)
 
     return phi3_config
 
@@ -48,8 +46,7 @@ def get_model_for_training(model_path="./tmp/models/Phi-3-mini-128k-instruct"):
     INFO_LOGGER.info(f"Transferring weights from old model to new model with {phi3_config.num_local_experts} experts")
     new_model = transfer_phi3_weights(old_model, new_model, phi3_config.num_local_experts)
 
-    INFO_LOGGER.info("Resetting embedding layer size and setting [CLS] token embedding to zero")
-    new_model.resize_token_embeddings(len(tokenizer))
+    INFO_LOGGER.info("Setting [CLS] token embedding to zero")
     with torch.no_grad():
         new_model.model.embed_tokens.weight[tokenizer.cls_token_id] = torch.zeros(phi3_config.hidden_size)
 
