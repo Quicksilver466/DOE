@@ -20,7 +20,7 @@
     "adam_epsilon": 1e-8,
     "max_grad_norm": 0.3,
     "num_train_epochs": 1,
-    "max_steps": 3,
+    "max_steps": 30,
     "lr_scheduler_type": "constant",
     "lr_scheduler_kwargs": {},
     "warmup_ratio": 0.03,
