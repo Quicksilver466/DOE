@@ -41,9 +41,8 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
     )
     GV.get_gv().get("INFO_LOGGER").info(f"Loading Base Model from path: {base_model_path}")
     base_model_config = get_phi3ex_config()
-    GV.get_gv().get("INFO_LOGGER").info(f"Phi-3ex config vocab size is: {base_model_config.vocab_size}")
     base_model = get_phi3ex_model_for_inference(base_model_config, base_model_path)
-    GV.get_gv().get("INFO_LOGGER").info(f"Loaded Base Model State Dicts are: \n{base_model.state_dict().keys()}\n")
+    GV.get_gv().get("INFO_LOGGER").info(f"Loading PEFT trained adapter from path: {model_save_path}")
     peft_model = PeftModel.from_pretrained(
         base_model,
         model_save_path,
