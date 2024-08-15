@@ -60,7 +60,7 @@ def train(model_save_path="./tmp/models/DOE-SFT"):
         safe_serialization=True,
         max_shard_size="4GB",
     )
-
+    GV.get_gv().get("INFO_LOGGER").info(f"Uploading model to Huggingface Repo")
     try:
         API.create_repo(
             "Quicksilver1/DOE-Model-test",
