@@ -4,6 +4,8 @@ set -e
 
 huggingface-cli login --token $HUGGINGFACE_TOKEN --add-to-git-credential
 
+model_revision=`jq '.model_revision' ./src/configs/model-configs.json`
+
 datasets_base_path="./tmp/datasets"
 models_base_path="./tmp/models"
 
@@ -20,6 +22,6 @@ mkdir -p "$dataset_complete_path"
 mkdir -p "$model_complete_path"
 
 huggingface-cli download $dataset_name --repo-type dataset --local-dir $dataset_complete_path
-huggingface-cli download $model_name --local-dir $model_complete_path
+huggingface-cli download $model_name --local-dir $model_complete_path --revision $model_revision
 
 python trainer.py

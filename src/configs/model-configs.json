@@ -4,5 +4,6 @@
     "ar_loss_weight": 0.7,
     "gating_loss_weight": 0.3,
     "untrained_model_save_base_path": "/workspace/models",
-    "untrained_model_save_name": "Phi3-Ex-Untrained"
+    "untrained_model_save_name": "Phi3-Ex-Untrained",
+    "model_revision": "10d25dfa1593265daf4a3bac573ab76ccf61d60f"
 }
