@@ -2,7 +2,7 @@ from datasets import load_dataset, load_from_disk
 from datasets import disable_caching
 from src.datasets.sft_datasets_transform import code_feedback_transform, maths_transform, medic_transform, mult_transform
 from src.datasets.sft_datasets_transform import code_feedback_transform_phi3, maths_transform_phi3, medic_transform_phi3, mult_transform_phi3
-from src.datasets.generic_datasets_transforms import chatml_transform, tokenize_transform, concat_shuffle_datasets, flatten_expert_indices
+from src.datasets.generic_datasets_transforms import chatml_transform, concat_shuffle_datasets, flatten_expert_indices, custom_tokenize_transform, custom_chatml_transform
 from src.utils.utils import create_dir_if_not_exists
 import os
 import torch
@@ -104,3 +104,50 @@ def flatten_column(dataset_path="/data/Datasets-LLMS/LFS-test/DOE-quadtask-token
     dataset = load_from_disk(dataset_path)
     dataset = dataset.map(flatten_expert_indices, cache_file_name="/data/Datasets-LLMS/temp-hf-cache/cache_dir.bin")
     dataset.save_to_disk(dataset_path + "-Flattened")
+
+
+def prepare_cpa_kb_data(
+    tokenizer,
+    dataset_base_path="/data/Datasets-LLMS", 
+    dataset_save_path="/data/Datasets-LLMS/CPA_KB_HF_DATA",
+    func_to_map=custom_tokenize_transform
+):
+    create_dir_if_not_exists(dataset_save_path)
+    
+    dataset_complete_path = os.path.join(dataset_base_path, "CPA_DB_TEXT")
+    expert_indices = torch.zeros((1, 2))
+    expert_indices[0, 0] = 1
+    dataset = load_from_disk(dataset_complete_path)
+    results = dataset.map(func_to_map, fn_kwargs={"expert_indices": expert_indices, "add_cls_token": True, "tokenizer": tokenizer, "add_special_tokens": True}, remove_columns=["text"])
+    results = results.shuffle()
+    results.flatten_indices()
+    results.set_format("pt", columns=["input_ids", "attention_mask", "expert_indices"]) # needed since map transforms torch tensor back to python list
+    results.save_to_disk(dataset_save_path)
+
+def prepare_slimorca_data(
+    tokenizer,
+    dataset_base_path="/data/Datasets-LLMS", 
+    dataset_save_path="/data/Datasets-LLMS/SlimOrca_HF_DATA",
+):
+    create_dir_if_not_exists(dataset_save_path)
+
+    dataset_complete_path = os.path.join(dataset_base_path, "SlimOrca")
+    expert_indices = torch.zeros((1, 2))
+    expert_indices[0, 1] = 1
+    #dataset = load_dataset(dataset_complete_path, split="train")
+    #results = dataset.map(custom_chatml_transform, fn_kwargs={"add_cls_token": True, "tokenizer": tokenizer}, remove_columns=["conversations"])
+#
+    #print(f"Sample:\n{results[2]['text']}")
+    inter_save_path = os.path.join(dataset_base_path, "SlimOrca_CHATML")
+    #results.save_to_disk(inter_save_path)
+    #del results
+    #del dataset
+
+    dataset = load_from_disk(inter_save_path)
+    results = dataset.map(custom_tokenize_transform, fn_kwargs={"expert_indices": expert_indices, "add_cls_token": False, "add_special_tokens": False, "tokenizer": tokenizer}, remove_columns=["text"])
+    #results = results.shuffle()
+    #results.flatten_indices()
+    results.set_format("pt", columns=["input_ids", "attention_mask", "expert_indices"]) # needed since map transforms torch tensor back to python list
+    results.save_to_disk(dataset_save_path)
+
+#prepare_cpa_kb_data()

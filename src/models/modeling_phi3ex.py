@@ -298,7 +298,7 @@ class Phi3exForCausalLM(Phi3ForCausalLM, PyTorchModelHubMixin):
         logits = self.lm_head(hidden_states)
         logits = logits.float()
 
-        if(compute_gating):
+        if compute_gating:
             gating_logits, gating_output = self.gating_model(hidden_states[..., 0, :])
             gating_loss = self.gating_loss_fct(gating_logits, expert_indices)
         else:
